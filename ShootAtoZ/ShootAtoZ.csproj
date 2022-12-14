@@ -82,6 +82,7 @@
     <Compile Include="Cardboard\Sensors\NfcSensor.cs" />
     <Compile Include="Cardboard\Viewport.cs" />
     <Compile Include="Enemy.cs" />
+    <Compile Include="GravitySensor.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Model.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="Shape.cs" />
+    <Compile Include="Vibrator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
