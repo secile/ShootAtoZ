@@ -43,10 +43,7 @@ namespace ShootAtoZ
         public void Init()
         {
             Destroy = false;
-            Attack = false;
         }
-
-        public bool Attack { get; set; }
 
         public bool Destroy { get; set; }
 
@@ -81,38 +78,33 @@ namespace ShootAtoZ
 
         public void Update()
         {
+
+        }
+
+        public bool Attack(char target)
+        {
             // すべての敵を近い順にチェック。
             foreach (var enemy in Enemies.OrderBy(x => x.Distance))
             {
+                if (enemy.Status == Enemy.StatusTypes.Beat) continue;
                 if (enemy.Status == Enemy.StatusTypes.Down) continue;
-
-                // 敵との衝突判定。
-                if (enemy.Distance < 0.1)
-                {
-                    Destroy = true;
-                }
 
                 // 正面なら敵は移動不可。
                 if (IsSameAngle(this.Forward, enemy.Angle))
                 {
-                    enemy.SetStatus(Enemy.StatusTypes.Wait);
-
-                    if (Attack)
+                    if (enemy.Char == target)
                     {
-                        if (enemy.Distance < 0.3)
-                        {
-                            enemy.SetStatus(Enemy.StatusTypes.Down);
-                            break;
-                        }
+                        enemy.SetStatus(Enemy.StatusTypes.Beat);
+                        return true;
+                    }
+                    else
+                    {
+                        enemy.SetStatus(Enemy.StatusTypes.Down);
+                        return false;
                     }
                 }
-                else
-                {
-                    enemy.SetStatus(Enemy.StatusTypes.Move);
-                }
             }
-
-            Attack = false;
+            return false;
         }
 
         /// <summary>Playerの向きとEnemyの方向が同じ場合true。</summary>
@@ -121,7 +113,7 @@ namespace ShootAtoZ
             var mat = Matrix4.CreateFromAxisAngle(Vector3.UnitY, (float)angle);
             var vec_b = Vector3.TransformVector(ForwardBase, mat);
             var dot = Vector3.Dot(vec_a, vec_b);
-            return dot > 0.95; // 同じ向きなら内積が1.0
+            return dot > 0.99; // 同じ向きなら内積が1.0
         }
     }
 }

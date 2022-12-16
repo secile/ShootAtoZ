@@ -14,6 +14,7 @@ namespace ShootAtoZ
     class Logic
     {
         private Shapes.Shape Floor;
+        private Shapes.Shape Timer;
         private Shader Shader;
 
         public void Init()
@@ -21,6 +22,7 @@ namespace ShootAtoZ
             GL.Enable(EnableCap.DepthTest); // Depthバッファの有効化(Z座標で手前に表示)
 
             Floor = new Shapes.Rectangle(50);
+            Timer = new Shapes.AsciiText("", 1, 1, true);
 
             Shader = new Shader();
         }
@@ -111,7 +113,7 @@ namespace ShootAtoZ
             // 床を描画。
             Shader.PushMatrix();
             {
-                Shader.Translate(0, -1, 0);       // 少し下げる。
+                Shader.Translate(0, -0.51f, 0);   // 少し下げる。
                 Shader.Rotate(90, Vector3.UnitX); // X軸を中心に90度回転し、平置きする。
 
                 var color =
@@ -137,6 +139,19 @@ namespace ShootAtoZ
                 }
                 Shader.PopMatrix();
             }
+
+            // タイマー表示。
+            Shader.PushMatrix();
+            {
+                Shader.Rotate(90, Vector3.UnitX);
+                Shader.Translate(0, 0, -10);
+                Shader.Scale(0.5f, 1, 1);
+                Shader.SetMaterial(Color4.White);
+                var text = model.Stopwatch.Elapsed.ToString(@"mm\:ss") + "\nNEXT:" + model.Target;
+                (Timer as Shapes.AsciiText).Update(text);
+                Timer.Draw(Shader);
+            }
+            Shader.PopMatrix();
 
             // Player描画（上空から眺める視点のみ）
             if (VrView == false)

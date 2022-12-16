@@ -5,6 +5,7 @@ using System.Text;
 
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.ES20;
 
 namespace ShootAtoZ
 {
@@ -21,14 +22,21 @@ namespace ShootAtoZ
 
         public bool Destroy { get; set; }
 
-        private Shapes.Shape Shape;
+        // Downするときの角度。
+        private float DownAngle;
 
-        public Enemy()
+        private Shapes.Shape ShapeText;
+        private Shapes.Shape ShapeRect;
+
+        public char Char { get; private set; }
+        public Enemy(char c)
         {
-            Shape = new Shapes.Sphere(0.5, 16, 16);
+            Char = c;
+            ShapeText = new Shapes.AsciiChar(c);
+            ShapeRect = new Shapes.Rectangle(1);
         }
 
-        public enum StatusTypes { Wait, Move, Down }
+        public enum StatusTypes { Wait, Move, Beat, Down }
         public StatusTypes Status { get; private set; } = StatusTypes.Wait;
 
         private int StatusTimer;
@@ -47,8 +55,31 @@ namespace ShootAtoZ
                     StatusMove();
                     break;
 
-                case StatusTypes.Down:
-                    if (StatusTimer > 60) Destroy = true;
+                case StatusTypes.Down: // 倒れる。
+                    if (StatusTimer < 18)
+                    {
+                        DownAngle += -5;
+                    }
+                    else if (StatusTimer < 80)
+                    {
+                        // しばらく倒れている。
+                    }
+                    else if (StatusTimer < 98)
+                    {
+                        DownAngle += 5;
+                    }
+                    else
+                    {
+                        SetStatus(StatusTypes.Move);
+                    }
+                    break;
+
+                case StatusTypes.Beat:
+                    DownAngle += 5;
+                    if (DownAngle >= 90)
+                    {
+                        Destroy = true;
+                    }
                     break;
             }
 
@@ -68,57 +99,64 @@ namespace ShootAtoZ
             // Y軸(上)
             //     |
             //     |
-            //   (* *)
-            //  (     )----X軸(右)
+            //  (  A  )----X軸(右)
             //    /
             //   /
             // Z軸(前)
 
-            if (Status == StatusTypes.Down)
-            {
-                shader.Rotate(-45, Vector3.UnitX);
-                shader.Translate(0, -0.5f, -0.2f); // 後退して少し沈む。
-            }
-
-            shader.SetMaterial(Color4.White);
-
             shader.PushMatrix();
             {
-                // 上玉ちょっと小さく。
-                shader.Scale(0.7f, 0.7f, 0.7f);
-                Shape.Draw(shader);
+                // 倒す。
+                shader.Translate(0, -0.5f, 0);
+                shader.Rotate(DownAngle, Vector3.UnitX);
+                shader.Translate(0, +0.5f, 0);
+
+                // 四角い板を描画。
+                shader.SetMaterial(GetColor(Char));
+                ShapeRect.Draw(shader);
+
+                // 文字描画。
+                shader.SetMaterial(Color4.Black);
+                shader.Translate(0, 0, 0.05f); // ちょっと手前にしないと板に埋もれる。
+                GL.LineWidth(10);
+                shader.Scale(0.5f, 0.5f, 0.5f);
+                ShapeText.Draw(shader);
             }
             shader.PopMatrix();
+        }
 
-            shader.PushMatrix();
-            {
-                // 下玉ちょっと下に移動。
-                shader.Translate(0, -0.6f, 0);
-                Shape.Draw(shader);
-            }
-            shader.PopMatrix();
-
-            shader.SetMaterial(Color4.Black);
-
-            shader.PushMatrix();
-            {
-                // 右目。少し右に寄せて手前(Z軸)に
-                shader.Translate(+0.15f, 0.1f, 0.3f);
-                shader.Scale(0.1f, 0.1f, 0.1f);
-                if (Status == StatusTypes.Wait) shader.Scale(1, 0.2f, 1); // 待機中は目を閉じる。
-                Shape.Draw(shader);
-            }
-            shader.PopMatrix();
-
-            shader.PushMatrix();
-            {
-                // 左目。少し左に寄せて手前(Z軸)に
-                shader.Translate(-0.15f, 0.1f, 0.3f);
-                shader.Scale(0.1f, 0.1f, 0.1f);
-                if (Status == StatusTypes.Wait) shader.Scale(1, 0.2f, 1); // 待機中は目を閉じる。
-                Shape.Draw(shader);
-            }
-            shader.PopMatrix();
+        private Color4 GetColor(int no)
+        {
+            Color4[] colors = {
+                Color4.Salmon,
+                Color4.Chocolate,
+                Color4.Gold,
+                Color4.Khaki,
+                Color4.Yellow,
+                Color4.DarkOrange,
+                Color4.GreenYellow,
+                Color4.Chartreuse,
+                Color4.LightGreen,
+                Color4.LimeGreen,
+                Color4.MediumSpringGreen,
+                Color4.Aquamarine,
+                Color4.Turquoise,
+                Color4.PaleTurquoise,
+                Color4.Aqua,
+                Color4.LightCyan,
+                Color4.DarkTurquoise,
+                Color4.DeepSkyBlue,
+                Color4.LightSkyBlue,
+                Color4.CornflowerBlue,
+                Color4.Violet,
+                Color4.DarkViolet,
+                Color4.Fuchsia,
+                Color4.DeepPink,
+                Color4.Pink,
+                Color4.LightPink,
+            };
+            no = no % colors.Length;
+            return colors[no];
         }
     }
 }

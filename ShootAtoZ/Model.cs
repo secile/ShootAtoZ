@@ -13,6 +13,8 @@ namespace ShootAtoZ
         public Action OnGameOver { get; set; }
         public Action<GameStatusType> OnStatusChanged { get; set; }
 
+        public System.Diagnostics.Stopwatch Stopwatch = new System.Diagnostics.Stopwatch();
+
         public Model()
         {
             Enemies = new List<Enemy>();
@@ -31,9 +33,14 @@ namespace ShootAtoZ
             }
         }
 
+        public char Target { get; private set; } = 'A';
+
         private void Attack()
         {
-            Player.Attack = true;
+            if (Player.Attack(Target))
+            {
+                Target++;
+            }
         }
 
         private void InitStage(int stage)
@@ -42,19 +49,14 @@ namespace ShootAtoZ
             Enemies.Clear();
 
             var rand = new Random();
-            var enemy_num = stage * 2; // 2,4,6...
-            for (int i = 0; i < enemy_num; i++)
+            for (char c = 'A'; c <= 'Z'; c++)
             {
-                var enemy = new Enemy();
+                var enemy = new Enemy(c);
                 enemy.Angle = rand.NextDouble() * Math.PI * 2; // 全周囲にランダムで
-                enemy.Distance = 0.5 + (rand.NextDouble() * 1.0); // 0.5-1.5範囲でランダム
-                enemy.Speed = 0.001 + (rand.NextDouble()  * 0.0001 * stage); // ステージが進むごとに少しずつ早く。
+                enemy.Distance = 0.25 + (rand.NextDouble() * 0.25); // 0.25-0.5範囲でランダム
+                //enemy.Speed = 0.001 + (rand.NextDouble() * 0.0001 * stage); // ステージが進むごとに少しずつ早く。
                 Enemies.Add(enemy);
             }
-
-            // 敵の1つだけは正面45度の範囲に出現。
-            Enemies[0].Angle = (-Math.PI / 8) + (rand.NextDouble() * Math.PI / 4);
-            //Enemies[0].Angle = 0;
         }
 
         private int GameStage;
@@ -96,7 +98,11 @@ namespace ShootAtoZ
 
                 case GameStatusType.Ready:
                     if (StatusTimer == 0) GameScore = 0;
-                    if (StatusTimer > 60) SetGameStatus(GameStatusType.Game);
+                    if (StatusTimer > 60)
+                    {
+                        Stopwatch.Restart();
+                        SetGameStatus(GameStatusType.Game);
+                    }
                     break;
 
                 case GameStatusType.Game:
@@ -104,6 +110,7 @@ namespace ShootAtoZ
                     break;
 
                 case GameStatusType.Clear:
+                    if (StatusTimer == 0) Stopwatch.Stop();
                     if (StatusTimer > 120) SetGameStatus(GameStatusType.Next);
                     break;
 

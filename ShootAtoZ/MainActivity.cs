@@ -16,7 +16,7 @@ using Com.Google.VRToolkit.CardBoard;
 
 namespace ShootAtoZ
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
     public class MainActivity : CardboardActivity
     {
         private const int MP = ViewGroup.LayoutParams.MatchParent;
@@ -67,7 +67,10 @@ namespace ShootAtoZ
                 onDestroy += (s, e) => sensor.Stop();
                 sensor.Start();
             }
-            onTouchEvent += (s, e) => model.Action();
+            onTouchEvent += (s, e) =>
+            {
+                if (e.Action == MotionEventActions.Down) model.Action();
+            };
 
             // Viewボタンで主観・上空視点切り替え
             {
@@ -113,7 +116,7 @@ namespace ShootAtoZ
                 frame.AddView(txt, new FrameLayout.LayoutParams(WC, WC, GravityFlags.Bottom | GravityFlags.Left)); // 左下
                 model.GameScoreUpdated += value =>
                 {
-                    this.RunOnUiThread(() => txt.Text = "⛄:" + value.ToString());
+                    this.RunOnUiThread(() => txt.Text = "NEXT:" + model.Target);
                 };
             }
 
@@ -131,10 +134,10 @@ namespace ShootAtoZ
             }
         }
 
-        private EventHandler onTouchEvent;
+        private EventHandler<Android.Views.MotionEvent> onTouchEvent;
         public override bool OnTouchEvent(Android.Views.MotionEvent e)
         {
-            onTouchEvent?.Invoke(this, EventArgs.Empty);
+            onTouchEvent?.Invoke(this, e);
             return base.OnTouchEvent(e);
         }
 

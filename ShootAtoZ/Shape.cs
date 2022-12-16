@@ -302,4 +302,163 @@ namespace ShootAtoZ.Shapes
             Texture = tex.ToArray();
         }
     }
+
+    public class AsciiText : Shape
+    {
+        private static List<AsciiChar> AllChars;
+
+        static AsciiText()
+        {
+            AllChars = new List<AsciiChar>();
+            for (char c = (char)0; c < 0x80; c++)
+            {
+                AllChars.Add(new AsciiChar(c));
+            }
+        }
+
+        private string Text;
+        private readonly float HSpace;
+        private readonly float VSpace;
+        private readonly bool Centering;
+
+        private float TextWidth = 0;
+        private float TextHeight = 0;
+
+        /// <summary>shape with text.</summary>
+        /// <param name="h_space">horizontal space between chars.</param>
+        /// <param name="v_space">vertical space between lines.</param>
+        public AsciiText(string text, float h_space, float v_space, bool centering)
+        {
+            HSpace = h_space;
+            VSpace = v_space;
+            Centering = centering;
+
+            Update(text);
+        }
+
+        /// <summary>update text.</summary>
+        public void Update(string text)
+        {
+            Text = text;
+            Init(text, Centering);
+        }
+
+        private void Init(string text, bool centering)
+        {
+            if (centering)
+            {
+                // calculate text width and height
+                float tmp_width = 0;
+                float max_width = 0;
+                float height = 0;
+                foreach (var item in text)
+                {
+                    if (item == '\n')
+                    {
+                        height += 1 + VSpace;
+                        tmp_width = 0;
+                    }
+                    else
+                    {
+                        tmp_width += 1 + HSpace;
+                        if (tmp_width > max_width) max_width = tmp_width;
+                    }
+                }
+                TextWidth = max_width - HSpace; // minus last space.
+                TextHeight = height - VSpace;   // minus last space.
+            }
+        }
+
+        public override void Draw(Shader shader)
+        {
+            // centering.
+            shader.Translate(-TextWidth / 2, TextHeight / 2, 0);
+
+            float h_offset = 0;
+            foreach (var item in Text)
+            {
+                if (item == '\n')
+                {
+                    shader.Translate(-h_offset, -(1 + VSpace), 0);
+                    h_offset = 0;
+                }
+                else
+                {
+                    int index = item;
+
+                    AsciiChar data = index < AllChars.Count ? AllChars[index] : AllChars[0];
+                    data.Draw(shader);
+                    shader.Translate(1f + HSpace, 0, 0);
+                    h_offset += 1f + HSpace;
+                }
+            }
+        }
+    }
+
+    public class AsciiChar : Shape
+    {
+        public char Character { get; private set; }
+
+        /// <summary>shape with char with X, Y coordinate size = 1.0f.</summary>
+        public AsciiChar(char c)
+        {
+            Character = c;
+
+            var index = c - ' ';
+
+            float[] data;
+            if (0 <= index && index < GLAsciiFont.Chars.Length)
+            {
+                data = GLAsciiFont.Chars[index];
+            }
+            else
+            {
+                data = GLAsciiFont.ControlChar;
+            }
+
+            Init(data);
+
+            this.VertexCount = data.Length / 2;
+            this.PrimitiveType = BeginMode.Lines;
+        }
+
+        private void Init(float[] data)
+        {
+            // font data contains only (x,y). (not contains z)
+            var len = data.Length / 2 * 3;
+            Vertexs = new float[len];
+            Normals = new float[len];
+            Texture = new float[data.Length];
+
+            // font data (x,y) coordinate is -1 to +1.
+            // (1) change coordinate to -0.5～+0.5. so multiply 0.5f.
+            // (2) change coordinate to -0.9～+0.9. so multiply 0.9f.
+            float scale = 0.5f * 0.9f;
+
+            int src_idx = 0;
+            for (int dst_idx = 0; dst_idx < Vertexs.Length; dst_idx += 6)
+            {
+                Vertexs[dst_idx + 0] = data[src_idx + 0] * scale; // ax
+                Vertexs[dst_idx + 1] = data[src_idx + 1] * scale; // ay
+                Vertexs[dst_idx + 2] = 0;                         // az
+                Vertexs[dst_idx + 3] = data[src_idx + 2] * scale; // bx
+                Vertexs[dst_idx + 4] = data[src_idx + 3] * scale; // by
+                Vertexs[dst_idx + 5] = 0;                         // bz
+
+                Normals[dst_idx + 0] = 0; // ax
+                Normals[dst_idx + 1] = 0; // ay
+                Normals[dst_idx + 2] = 1; // az
+                Normals[dst_idx + 3] = 0; // bx
+                Normals[dst_idx + 4] = 0; // by
+                Normals[dst_idx + 5] = 1; // bz
+
+                Texture[src_idx + 0] = data[src_idx + 0] * scale; // ax
+                Texture[src_idx + 1] = data[src_idx + 1] * scale; // ay
+                Texture[src_idx + 2] = data[src_idx + 2] * scale; // bx
+                Texture[src_idx + 3] = data[src_idx + 3] * scale; // by
+
+                src_idx += 4;
+            }
+        }
+    }
 }
