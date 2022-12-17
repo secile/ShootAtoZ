@@ -114,7 +114,7 @@ namespace ShootAtoZ
                 var txt = new TextView(this);
                 txt.SetTextColor(Android.Graphics.Color.White);
                 frame.AddView(txt, new FrameLayout.LayoutParams(WC, WC, GravityFlags.Bottom | GravityFlags.Left)); // 左下
-                model.GameScoreUpdated += value =>
+                model.Destroied += () =>
                 {
                     this.RunOnUiThread(() => txt.Text = "NEXT:" + model.Target);
                 };
@@ -130,7 +130,7 @@ namespace ShootAtoZ
             var vibrator = new Vibrator(this);
             if (vibrator.Available)
             {
-                model.OnGameOver += () => { if (vibrate) vibrator.OneShot(); };
+                model.Destroied += () => { if (vibrate) vibrator.OneShot(100); };
             }
         }
 

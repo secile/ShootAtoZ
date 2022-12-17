@@ -22,16 +22,16 @@ namespace ShootAtoZ
             Available = device != null;
         }
 
-        public void OneShot()
+        public void OneShot(long ms)
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var effect = VibrationEffect.CreateOneShot(200, VibrationEffect.DefaultAmplitude);
+                var effect = VibrationEffect.CreateOneShot(ms, VibrationEffect.DefaultAmplitude);
                 device.Vibrate(effect);
             }
             else
             {
-                device.Vibrate(200);
+                device.Vibrate(ms);
             }
         }
     }

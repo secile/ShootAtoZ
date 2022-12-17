@@ -35,21 +35,24 @@ namespace ShootAtoZ
 
         public char Target { get; private set; } = 'A';
 
+        public Action Destroied { get; set; }
+
         private void Attack()
         {
             if (Player.Attack(Target))
             {
                 Target++;
+                Destroied?.Invoke();
             }
         }
 
-        private void InitStage(int stage)
+        private void InitStage()
         {
             Player.Init();
             Enemies.Clear();
 
             var rand = new Random();
-            for (char c = 'A'; c <= 'Z'; c++)
+            for (char c = 'A'; c <= 'B'; c++)
             {
                 var enemy = new Enemy(c);
                 enemy.Angle = rand.NextDouble() * Math.PI * 2; // 全周囲にランダムで
@@ -59,20 +62,7 @@ namespace ShootAtoZ
             }
         }
 
-        private int GameStage;
-        private int _GameScore;
-        private int GameScore
-        {
-            get { return _GameScore; }
-            set
-            {
-                _GameScore = value;
-                GameScoreUpdated?.Invoke(value);
-            }
-        }
-        public Action<int> GameScoreUpdated;
-
-        public enum GameStatusType { Init, Title, Ready, Game, Clear, Next, Over }
+        public enum GameStatusType { Init, Title, Ready, Game, Over }
         public GameStatusType GameStatus { get; private set; } = GameStatusType.Init;
         private int StatusTimer;
 
@@ -89,16 +79,18 @@ namespace ShootAtoZ
             {
                 case GameStatusType.Init:
                     SetGameStatus(GameStatusType.Title);
-                    GameStage = 1;
-                    InitStage(GameStage);
+                    InitStage();
                     break;
 
                 case GameStatusType.Title:
                     break;
 
                 case GameStatusType.Ready:
-                    if (StatusTimer == 0) GameScore = 0;
-                    if (StatusTimer > 60)
+                    if (StatusTimer == 0)
+                    {
+                        Stopwatch.Restart();
+                    }
+                    if (StatusTimer > 30 * 5)
                     {
                         Stopwatch.Restart();
                         SetGameStatus(GameStatusType.Game);
@@ -109,18 +101,11 @@ namespace ShootAtoZ
                     GameMain();
                     break;
 
-                case GameStatusType.Clear:
-                    if (StatusTimer == 0) Stopwatch.Stop();
-                    if (StatusTimer > 120) SetGameStatus(GameStatusType.Next);
-                    break;
-
-                case GameStatusType.Next:
-                    SetGameStatus(GameStatusType.Ready);
-                    GameStage += 1;
-                    InitStage(GameStage);
-                    break;
-
                 case GameStatusType.Over:
+                    if (StatusTimer == 0)
+                    {
+                        Stopwatch.Stop();
+                    }
                     if (StatusTimer > 240) SetGameStatus(GameStatusType.Init);
                     break;
             }
@@ -130,14 +115,8 @@ namespace ShootAtoZ
 
         private void GameMain()
         {
-            // Playerがやられたらゲームオーバー。
-            // Enemyが全滅したら次のステージへ。
-            if (Enemies.Count == 0) SetGameStatus(GameStatusType.Clear);
-            if(Player.Destroy)
-            {
-                SetGameStatus(GameStatusType.Over);
-                OnGameOver?.Invoke();
-            }
+            // Enemyが全滅したらゲームオーバー。
+            if (Enemies.Count == 0) SetGameStatus(GameStatusType.Over);
 
             // PlayerとEnemyの状態を更新。
             Player.Update();
@@ -153,7 +132,6 @@ namespace ShootAtoZ
                 if (enemy.Destroy)
                 {
                     Enemies.Remove(enemy);
-                    GameScore = ++GameScore;
                 }
             }
         }

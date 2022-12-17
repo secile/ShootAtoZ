@@ -136,7 +136,7 @@ namespace ShootAtoZ
                 Color4.DarkOrange,
                 Color4.GreenYellow,
                 Color4.Chartreuse,
-                Color4.LightGreen,
+                Color4.Orange,
                 Color4.LimeGreen,
                 Color4.MediumSpringGreen,
                 Color4.Aquamarine,
