@@ -407,13 +407,13 @@ namespace ShootAtoZ.Shapes
             var index = c - ' ';
 
             float[] data;
-            if (0 <= index && index < GLAsciiFont.Chars.Length)
+            if (0 <= index && index < ShapeAsciiFont.Chars.Length)
             {
-                data = GLAsciiFont.Chars[index];
+                data = ShapeAsciiFont.Chars[index];
             }
             else
             {
-                data = GLAsciiFont.ControlChar;
+                data = ShapeAsciiFont.ControlChar;
             }
 
             Init(data);

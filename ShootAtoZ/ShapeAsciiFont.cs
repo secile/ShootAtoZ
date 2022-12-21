@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ShootAtoZ
 {
-    public static class GLAsciiFont
+    public static class ShapeAsciiFont
     {
         // ASCII font data with X, Y coordinate range of -1 to +1. This data expected to be used in OpenGL.
         // The data contains only the X and Y coordinates. (Z coordinates are not included)

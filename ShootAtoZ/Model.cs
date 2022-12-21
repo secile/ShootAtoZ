@@ -68,7 +68,7 @@ namespace ShootAtoZ
                 Enemies.Add(enemy);
             }
 
-            Target = 'A';
+            Target = Enemies[0].Char;
         }
 
         private void InitTitle()

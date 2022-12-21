@@ -93,7 +93,7 @@
     <Compile Include="Cardboard\Sensors\NfcSensor.cs" />
     <Compile Include="Cardboard\Viewport.cs" />
     <Compile Include="Enemy.cs" />
-    <Compile Include="GLAsciiFont.cs" />
+    <Compile Include="ShapeAsciiFont.cs" />
     <Compile Include="GravitySensor.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="MainActivity.cs" />
