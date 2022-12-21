@@ -17,9 +17,6 @@ namespace ShootAtoZ
         /// <summary>中心からの距離。0.0-1.0範囲</summary>
         public double Distance { get; set; }
 
-        /// <summary>移動速度</summary>
-        public double Speed { get; set; }
-
         public bool Destroy { get; set; }
 
         // Downするときの角度。
@@ -36,7 +33,7 @@ namespace ShootAtoZ
             ShapeRect = new Shapes.Rectangle(1);
         }
 
-        public enum StatusTypes { Wait, Move, Beat, Down }
+        public enum StatusTypes { Wait, Beat, Down }
         public StatusTypes Status { get; private set; } = StatusTypes.Wait;
 
         private int StatusTimer;
@@ -51,13 +48,13 @@ namespace ShootAtoZ
         {
             switch (Status)
             {
-                case StatusTypes.Move:
-                    StatusMove();
+                case StatusTypes.Wait:
                     break;
 
-                case StatusTypes.Down: // 倒れる。
+                case StatusTypes.Down:
                     if (StatusTimer < 18)
                     {
+                        // 倒れる。
                         DownAngle += -5;
                     }
                     else if (StatusTimer < 80)
@@ -66,17 +63,18 @@ namespace ShootAtoZ
                     }
                     else if (StatusTimer < 98)
                     {
+                        // 起き上がる。
                         DownAngle += 5;
                     }
                     else
                     {
-                        SetStatus(StatusTypes.Move);
+                        SetStatus(StatusTypes.Wait);
                     }
                     break;
 
                 case StatusTypes.Beat:
-                    DownAngle += 5;
-                    if (DownAngle >= 90)
+                    DownAngle -= 5;
+                    if (DownAngle <= -90)
                     {
                         Destroy = true;
                     }
@@ -84,12 +82,6 @@ namespace ShootAtoZ
             }
 
             StatusTimer++;
-        }
-
-        private void StatusMove()
-        {
-            this.Distance -= this.Speed;
-            if (this.Distance < 0) this.Distance = 0;
         }
 
         public void Draw(Shader shader)

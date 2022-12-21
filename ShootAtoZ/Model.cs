@@ -33,16 +33,24 @@ namespace ShootAtoZ
             }
         }
 
-        public char Target { get; private set; } = 'A';
+        private char _Target;
+        public char Target
+        {
+            get { return _Target; }
+            set
+            {
+                _Target = value;
+                TargetChanged?.Invoke(value);
+            }
+        }
 
-        public Action Destroied { get; set; }
+        public Action<char> TargetChanged { get; set; }
 
         private void Attack()
         {
             if (Player.Attack(Target))
             {
                 Target++;
-                Destroied?.Invoke();
             }
         }
 
@@ -52,29 +60,41 @@ namespace ShootAtoZ
             Enemies.Clear();
 
             var rand = new Random();
-            for (char c = 'A'; c <= 'B'; c++)
+            for (char c = 'A'; c <= 'Z'; c++)
             {
                 var enemy = new Enemy(c);
                 enemy.Angle = rand.NextDouble() * Math.PI * 2; // 全周囲にランダムで
                 enemy.Distance = 0.25 + (rand.NextDouble() * 0.25); // 0.25-0.5範囲でランダム
-                //enemy.Speed = 0.001 + (rand.NextDouble() * 0.0001 * stage); // ステージが進むごとに少しずつ早く。
                 Enemies.Add(enemy);
             }
+
+            Target = 'A';
         }
 
-        public enum GameStatusType { Init, Title, Ready, Game, Over }
+        public enum GameStatusType { Init, Title, Ready, Game, Over, Result }
         public GameStatusType GameStatus { get; private set; } = GameStatusType.Init;
+        private GameStatusType NextStatus = GameStatusType.Init;
         private int StatusTimer;
 
         private void SetGameStatus(GameStatusType status)
         {
-            GameStatus = status;
+            NextStatus = status;
             StatusTimer = 0;
             OnStatusChanged?.Invoke(status);
         }
 
+        private bool exitStatus => GameStatus != NextStatus;
+
         public void UpdateStatus()
         {
+            // Statusが変わっていたら初期化フラグを立てる。
+            var initStatus = false;
+            if (GameStatus != NextStatus)
+            {
+                GameStatus = NextStatus;
+                initStatus = true;
+            }
+
             switch (GameStatus)
             {
                 case GameStatusType.Init:
@@ -86,27 +106,25 @@ namespace ShootAtoZ
                     break;
 
                 case GameStatusType.Ready:
-                    if (StatusTimer == 0)
+                    if (initStatus) Stopwatch.Restart();
+                    if (StatusTimer > 30 * 4)
                     {
-                        Stopwatch.Restart();
-                    }
-                    if (StatusTimer > 30 * 5)
-                    {
-                        Stopwatch.Restart();
                         SetGameStatus(GameStatusType.Game);
                     }
                     break;
 
                 case GameStatusType.Game:
+                    if (initStatus) Stopwatch.Restart();
                     GameMain();
+                    if (exitStatus) Stopwatch.Stop();
                     break;
 
                 case GameStatusType.Over:
-                    if (StatusTimer == 0)
-                    {
-                        Stopwatch.Stop();
-                    }
-                    if (StatusTimer > 240) SetGameStatus(GameStatusType.Init);
+                    if (StatusTimer > 30 * 5) SetGameStatus(GameStatusType.Result);
+                    break;
+
+                case GameStatusType.Result:
+                    if (StatusTimer > 30 * 5) SetGameStatus(GameStatusType.Init);
                     break;
             }
 

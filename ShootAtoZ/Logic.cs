@@ -98,7 +98,7 @@ namespace ShootAtoZ
 
             GL.ClearColor(Color4.Black); // 消去色を設定
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
+            
             SetCamera(transform);
 
             SetSight(transform);
@@ -107,14 +107,7 @@ namespace ShootAtoZ
             
             if (VrView)
             {
-                var lookat = Matrix4.LookAt(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY);
-                Shader.SetLookAt(lookat);
-
-                var mat = Matrix4.CreateOrthographic(ViewWidth, ViewHeight, 1, 100);
-                Shader.SetProjection(mat);
-
-                Shader.IdentityMatrix();
-                RenderOverlay(model);
+                RenderMsg(model);
             }
         }
 
@@ -150,7 +143,7 @@ namespace ShootAtoZ
                 Shader.PopMatrix();
             }
 
-            // タイマー表示。
+            // 上空にタイマーとNEXT表示。
             if (model.GameStatus == Model.GameStatusType.Game)
             {
                 Shader.PushMatrix();
@@ -158,7 +151,9 @@ namespace ShootAtoZ
                     Shader.Rotate(90, Vector3.UnitX);
                     Shader.Translate(0, 0, -10);
                     Shader.Scale(0.5f, 1, 1);
+                    if (VrView == false) Shader.Rotate(180, Vector3.UnitX);
                     Shader.SetMaterial(Color4.White);
+                    GL.LineWidth(5);
                     var text = model.Stopwatch.Elapsed.ToString(@"mm\:ss") + "\nNEXT:" + model.Target;
                     (Timer as Shapes.AsciiText).Update(text);
                     Timer.Draw(Shader);
@@ -177,54 +172,48 @@ namespace ShootAtoZ
             }
         }
 
-        private void RenderOverlay(Model model)
+        private void RenderMsg(Model model)
         {
-            if (model.GameStatus == Model.GameStatusType.Title)
+            string text = null;
+            switch(model.GameStatus)
             {
-                Shader.PushMatrix();
-                {
-                    Shader.Translate(0, 0, -1);
-                    Shader.Scale(25, 100, 100);
-                    Shader.SetMaterial(Color4.White);
-                    GL.LineWidth(20);
-                    var text = "Tap or Shake to Start!";
-                    (Timer as Shapes.AsciiText).Update(text);
-                    Timer.Draw(Shader);
-                }
-                Shader.PopMatrix();
-            }
+                case Model.GameStatusType.Title:
+                    text = "Tap or Shake\nto Start!";
+                    break;
 
-            // カウントダウン。
-            if (model.GameStatus == Model.GameStatusType.Ready)
-            {
-                var countdown = 3 - (int)model.Stopwatch.Elapsed.TotalSeconds;
-                var text = countdown > 0 ? countdown.ToString() : "GO!";
-                Shader.PushMatrix();
-                {
-                    Shader.Translate(0, 0, -1);
-                    Shader.Scale(50, 100, 100);
-                    Shader.SetMaterial(Color4.White);
-                    GL.LineWidth(20);
-                    (Timer as Shapes.AsciiText).Update(text);
-                    Timer.Draw(Shader);
-                }
-                Shader.PopMatrix();
-            }
+                case Model.GameStatusType.Ready:
+                    var countdown = 3 - (int)model.Stopwatch.Elapsed.TotalSeconds;
+                    text = countdown > 0 ? countdown.ToString() : "GO!";
+                    break;
 
-            if (model.GameStatus == Model.GameStatusType.Over)
+                case Model.GameStatusType.Over:
+                    text = "FINISH!";
+                    break;
+
+                case Model.GameStatusType.Result:
+                    text = "RESULT:" + model.Stopwatch.Elapsed.ToString(@"mm\:ss");
+                    break;
+            }
+            if (text == null) return;
+
+            // カメラを原点に戻す。
+            var lookat = Matrix4.LookAt(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY);
+            Shader.SetLookAt(lookat);
+
+            Shader.PushMatrix();
             {
-                Shader.PushMatrix();
+                // 最前面に描画する。(これがないと他のオブジェクトに隠れる)
+                GL.Disable(EnableCap.DepthTest);
                 {
-                    Shader.Translate(0, 0, -1);
-                    Shader.Scale(50f, 100, 100);
+                    Shader.Translate(0, 0, -20); // 近すぎたら大きすぎるので遠くに。
                     Shader.SetMaterial(Color4.White);
-                    GL.LineWidth(20);
-                    var text = model.Stopwatch.Elapsed.ToString(@"mm\:ss");
+                    GL.LineWidth(5);
                     (Timer as Shapes.AsciiText).Update(text);
                     Timer.Draw(Shader);
                 }
-                Shader.PopMatrix();
+                GL.Enable(EnableCap.DepthTest);
             }
+            Shader.PopMatrix();
         }
     }
 

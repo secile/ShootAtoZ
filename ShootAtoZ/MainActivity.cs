@@ -101,22 +101,10 @@ namespace ShootAtoZ
             {
                 var txt = new TextView(this);
                 txt.SetTextColor(Android.Graphics.Color.White);
-                frame.AddView(txt, new FrameLayout.LayoutParams(WC, WC, GravityFlags.Center)); // 中央
-                model.OnStatusChanged += (status) =>
-                {
-                    string msg = status == Model.GameStatusType.Title ? "touch screen or shake device to start!" : "";
-                    this.RunOnUiThread(() => txt.Text = msg);
-                };
-            }
-
-            // 得点表示用。
-            {
-                var txt = new TextView(this);
-                txt.SetTextColor(Android.Graphics.Color.White);
                 frame.AddView(txt, new FrameLayout.LayoutParams(WC, WC, GravityFlags.Bottom | GravityFlags.Left)); // 左下
-                model.Destroied += () =>
+                model.TargetChanged += (value) =>
                 {
-                    this.RunOnUiThread(() => txt.Text = "NEXT:" + model.Target);
+                    this.RunOnUiThread(() => txt.Text = "NEXT:" + value);
                 };
             }
 
@@ -130,7 +118,7 @@ namespace ShootAtoZ
             var vibrator = new Vibrator(this);
             if (vibrator.Available)
             {
-                model.Destroied += () => { if (vibrate) vibrator.OneShot(100); };
+                model.TargetChanged += (value) => { if (vibrate) vibrator.OneShot(100); };
             }
         }
 
@@ -183,7 +171,7 @@ namespace ShootAtoZ
 
             // ゲームの状態を更新。
             Model.UpdateStatus();
-
+            
             Logic.Update();
         }
 
