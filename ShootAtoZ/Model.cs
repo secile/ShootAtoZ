@@ -71,6 +71,25 @@ namespace ShootAtoZ
             Target = 'A';
         }
 
+        private void InitTitle()
+        {
+            Enemies.Clear();
+
+            var angle = 0.5;
+            var text = "Shoot A-Z!";
+            foreach (var item in text)
+            {
+                var enemy = new Enemy(item);
+                if (item != ' ')
+                {
+                    enemy.Angle = angle;
+                    enemy.Distance = 0.5;
+                    Enemies.Add(enemy);
+                }
+                angle -= 0.11f;
+            }
+        }
+
         public enum GameStatusType { Init, Title, Ready, Game, Over, Result }
         public GameStatusType GameStatus { get; private set; } = GameStatusType.Init;
         private GameStatusType NextStatus = GameStatusType.Init;
@@ -99,13 +118,14 @@ namespace ShootAtoZ
             {
                 case GameStatusType.Init:
                     SetGameStatus(GameStatusType.Title);
-                    InitStage();
                     break;
 
                 case GameStatusType.Title:
+                    if (initStatus) InitTitle();
                     break;
 
                 case GameStatusType.Ready:
+                    if (initStatus) InitStage();
                     if (initStatus) Stopwatch.Restart();
                     if (StatusTimer > 30 * 4)
                     {

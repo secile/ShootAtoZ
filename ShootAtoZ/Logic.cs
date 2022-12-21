@@ -121,7 +121,7 @@ namespace ShootAtoZ
                 Shader.Translate(0, -0.51f, 0);   // 少し下げる。
                 Shader.Rotate(90, Vector3.UnitX); // X軸を中心に90度回転し、平置きする。
 
-                var color = Color4.SkyBlue;
+                var color = model.GameStatus == Model.GameStatusType.Over || model.GameStatus == Model.GameStatusType.Result? Color4.LightPink : Color4.SkyBlue;
                 Shader.SetMaterial(color);
                 Floor.Draw(Shader);
             }
